@@ -1,6 +1,6 @@
 #Import modules
 from snapgene_reader import snapgene_file_to_seqrecord
-import os
+import os, argparse
 from os import walk
 
 
@@ -105,14 +105,17 @@ def fasta_converter():
     if len(seqSizesList) == 0:
         print("No files converted")
 
-if __name__ == "__main__":
-    import argparse
-    parser = argparse.ArgumentParser("DNA sequence editing tools")
+def parse_args():
+    parser = argparse.ArgumentParser(description="DNA sequence editing tools")
     parser.add_argument("--reverse_complentarity", "-r", type=str, help="Returns the reverse complimentarity of a DNA sequence. Usage: -r SEQUENCE")  
     parser.add_argument("--moles_to_weight", "-m2w", nargs='+', type=float, help="Returns the weight of a given size and moles of DNA. Usage -m2w MOLES(fmol) DNA_SIZE(kb)")
     parser.add_argument("--enzyme_noncutter", "-enc", type=str, help="Returns the enzymes which don't cut a DNA sequence. Usage -enc FILE")
     parser.add_argument("--fasta_converter", "-fc", action='store_true', help="Returns size of the DNA files in the same folder and converts them to a fa file format. Usage -fc")
     args = parser.parse_args()
+    return args
+
+if __name__ == "__main__":
+    args = parse_args()
     if args.reverse_complentarity:
         print(reverse_comp_seq(args.reverse_complentarity))
     elif args.moles_to_weight:
