@@ -81,29 +81,39 @@ def enzyme_noncutter(file):
 
 def fasta_converter():
     abspath = os.path.abspath(__file__)
-    current_dir = os.path.dirname(abspath) 
-    os.chdir(current_dir)
+    root_dir = os.path.dirname(abspath)
+    os.chdir(root_dir)
 
-    # Walk directory and exclude __file__ from list 
-    inputFileNames = next(walk(current_dir), (None, None, []))[2]  # [] if no file
-    inputFileNames = [file for file in inputFileNames if file != os.path.basename(__file__)]  # Exclude the script file
     seqSizesList = []
 
-    # Convert DNA file to fasta format and record DNA size
-    for x in range(len(inputFileNames)):
-        currentPlamsid = inputFileNames[x]
-        if currentPlamsid[-3:] == "dna":
-            readSeqRecord = snapgene_file_to_seqrecord(os.path.join(current_dir, currentPlamsid)) 
-            seqRecord = readSeqRecord.seq
-            with open(currentPlamsid[:-4] + ".fa", "w") as f:
-                f.write(">" + currentPlamsid[:-4] + "\n" + str(seqRecord))
-            seqSizesList.append(inputFileNames[x] + ": " + str(len(seqRecord)))
+    # Walk one level of subdirectories only
+    for subdir_name in next(os.walk(root_dir))[1]:  # get list of subdirectories
+        subdir_path = os.path.join(root_dir, subdir_name)
 
-    # Print DNA size to screen
-    for line in seqSizesList:
-        print(line)
-    if len(seqSizesList) == 0:
-        print("No files converted")
+        for file in os.listdir(subdir_path):
+            if file.endswith(".dna"):
+                dna_path = os.path.join(subdir_path, file)
+
+                try:
+                    readSeqRecord = snapgene_file_to_seqrecord(dna_path)
+                    seqRecord = readSeqRecord.seq
+
+                    out_path = os.path.join(subdir_path, file[:-4] + ".fa")
+                    with open(out_path, "w") as f:
+                        f.write(f">{file[:-4]}\n{seqRecord}")
+
+                    seqSizesList.append(f"{os.path.join(subdir_name, file)}: {len(seqRecord)}")
+
+                except Exception as e:
+                    print(f"[warning] Failed to convert {file}: {e}")
+
+    # Print results
+    if seqSizesList:
+        print("Converted files:")
+        for line in seqSizesList:
+            print("  " + line)
+    else:
+        print("No .dna files found in subdirectories.")
 
 def parse_args():
     parser = argparse.ArgumentParser(description="DNA sequence editing tools")
